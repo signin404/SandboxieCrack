@@ -143,9 +143,21 @@ jobs:
     # Compile Sandboxie Plus
     #
 
+      - name: Patch qmake_plus.cmd to use nmake (Fix LNK1181)
+        shell: powershell
+        run: |
+          $file = "SandboxiePlus\qmake_plus.cmd"
+          $content = Get-Content $file
+          # Replace any path ending in jom.exe with just 'nmake'
+          # nmake is available in the VS environment path
+          $content = $content -replace '\S*jom.exe', 'nmake'
+          # Remove the -j 8 argument (nmake does not support it)
+          $content = $content -replace '-j 8', ''
+          Set-Content $file $content
+          Write-Host "Patched $file to use nmake instead of jom"
+
       - name: Build Sandboxie-Plus x64
-        # Fix: Added retry mechanism (||) to handle Jom parallel build race conditions (LNK1181)
-        run: SandboxiePlus\qmake_plus.cmd x64 build_qt6 || SandboxiePlus\qmake_plus.cmd x64 build_qt6
+        run: SandboxiePlus\qmake_plus.cmd x64 build_qt6
 
       - name: Build SbieShell x64
         run: msbuild /t:restore,build -p:RestorePackagesConfig=true SandboxiePlus\SbieShell\SbieShell.sln /p:Configuration="Release" /p:Platform=x64
@@ -270,9 +282,20 @@ jobs:
     # Compile Sandboxie Plus
     #
 
+      - name: Patch qmake_plus.cmd to use nmake (Fix LNK1181)
+        shell: powershell
+        run: |
+          $file = "SandboxiePlus\qmake_plus.cmd"
+          $content = Get-Content $file
+          # Replace any path ending in jom.exe with just 'nmake'
+          $content = $content -replace '\S*jom.exe', 'nmake'
+          # Remove the -j 8 argument
+          $content = $content -replace '-j 8', ''
+          Set-Content $file $content
+          Write-Host "Patched $file to use nmake instead of jom"
+
       - name: Build Sandboxie-Plus ARM64
-        # Fix: Added retry mechanism (||) to handle Jom parallel build race conditions
-        run: SandboxiePlus\qmake_plus.cmd ARM64 build_qt6 || SandboxiePlus\qmake_plus.cmd ARM64 build_qt6
+        run: SandboxiePlus\qmake_plus.cmd ARM64 build_qt6
 
       - name: Build SbieShell ARM64
         run: msbuild /t:restore,build -p:RestorePackagesConfig=true SandboxiePlus\SbieShell\SbieShell.sln /p:Configuration="Release" /p:Platform=ARM64
